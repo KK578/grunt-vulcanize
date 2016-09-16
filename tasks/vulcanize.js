@@ -64,8 +64,25 @@ module.exports = function(grunt) {
 
         if (options.csp) {
           var crisper = require('crisper');
-          var cspPath = path.resolve(path.dirname(f.dest), options.csp);
-          var out = crisper.split(inlinedHtml, options.csp);
+
+          // Legacy support for String type inputs.
+          var cspPath;
+          if (typeof options.csp === 'string') {
+              cspPath = path.resolve(path.dirname(f.dest), options.csp);
+              options.csp = { jsFileName: options.csp };
+          }
+          else {
+              cspPath = path.resolve(path.dirname(f.dest), options.csp.jsFileName);
+          }
+
+          // Set Crisper source HTML.
+          options.csp.source = inlinedHtml;
+          // Set Crisper script import position to end of file.
+          if (!options.csp.scriptInHead) {
+              options.csp.scriptInHead = false;
+          }
+
+          var out = crisper(options.csp);
           inlinedHtml = out.html;
           grunt.file.write(cspPath, out.js);
           grunt.log.ok(src[0] + " -> " + cspPath);
